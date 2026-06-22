@@ -1,97 +1,37 @@
 (function() {
-    // 1. Inject the CSS for the Red/White/Black Theme
+    // 1. Dynamically Load Markdown Parser
+    const markedScript = document.createElement('script');
+    markedScript.src = "https://cdn.jsdelivr.net/npm/marked/marked.min.js";
+    document.head.appendChild(markedScript);
+
+    // 2. Inject CSS
     const style = document.createElement('style');
-    style.innerHTML = `
-        #ai-chat-widget { position: fixed; bottom: 20px; right: 20px; z-index: 9999; font-family: sans-serif; }
-        #ai-chat-button { 
-            background: #E60000; color: #FFFFFF; 
-            border: none; width: 65px; height: 65px; border-radius: 50%; 
-            cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
-            display: flex; align-items: center; justify-content: center; transition: 0.2s;
-        }
-        #ai-chat-button:hover { transform: scale(1.05); }
-        #ai-chat-button:hover svg { fill: #111; } /* Subtile hover effect */
-        #ai-chat-button svg { width: 35px; height: 35px; fill: #FFFFFF; }
-        #ai-chat-window { 
-            display: none; width: 350px; height: 450px; 
-            background: #FFFFFF; border: 1px solid #111; 
-            border-radius: 10px; flex-direction: column; 
-            box-shadow: 0 10px 15px rgba(0,0,0,0.5); overflow: hidden; margin-bottom: 15px; 
-        }
-        #ai-chat-header { 
-            background: #111111; color: #FFFFFF; padding: 15px; 
-            font-weight: bold; text-align: center; border-bottom: 4px solid #E60000;
-        }
-        #ai-chat-messages { 
-            flex-grow: 1; padding: 15px; overflow-y: auto; 
-            background: #F4F4F4; color: #000; font-size: 14px; 
-            display: flex; flex-direction: column; gap: 10px; 
-        }
-        .user-msg { 
-            align-self: flex-end; background: #E60000; color: #FFFFFF; 
-            padding: 10px; border-radius: 10px 10px 0 10px; max-width: 80%; line-height: 1.4;
-        }
-        .ai-msg { 
-            align-self: flex-start; background: #FFFFFF; color: #111111; 
-            padding: 10px; border-radius: 10px 10px 10px 0; border: 1px solid #CCC; max-width: 80%; line-height: 1.4;
-        }
-        .error-msg {
-            align-self: flex-start; background: #111111; color: #E60000; 
-            padding: 10px; border-radius: 10px; border: 1px solid #E60000; font-weight: bold;
-        }
-        #ai-chat-input-area { display: flex; border-top: 1px solid #CCC; background: #FFF; }
-        #ai-chat-input { 
-            flex-grow: 1; padding: 15px; border: none; 
-            background: #FFFFFF; color: #111111; outline: none; 
-        }
-        #ai-chat-send { 
-            background: #111111; color: #FFFFFF; border: none; 
-            padding: 0 20px; cursor: pointer; font-weight: bold; transition: 0.2s;
-        }
-        #ai-chat-send:hover { background: #E60000; }
-    `;
+    style.innerHTML = '#ai-chat-widget-btn { position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: #E60000; color: #FFF; border: none; width: 65px; height: 65px; border-radius: 50%; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; } #ai-chat-widget-btn svg { width: 35px; height: 35px; fill: #FFF; } #ai-chat-window { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #FFF; z-index: 10000; flex-direction: column; font-family: sans-serif; } #ai-chat-header { background: #111; color: #FFF; padding: 15px 20px 25px 20px; display: flex; align-items: center; border-bottom-left-radius: 40px; border-bottom-right-radius: 40px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); } #ai-chat-close { background: none; border: none; color: #FFF; font-size: 24px; cursor: pointer; padding-right: 15px; font-weight: bold; } #ai-chat-logo { width: 40px; height: 40px; border-radius: 50%; background: #FFF; margin-right: 15px; object-fit: cover; } #ai-chat-title { font-size: 18px; font-weight: bold; } #ai-chat-messages { flex-grow: 1; padding: 20px; overflow-y: auto; background: #FFF; display: flex; flex-direction: column; gap: 15px; } .msg-wrapper { display: flex; flex-direction: column; max-width: 85%; } .msg-label { font-size: 11px; color: #888; margin-bottom: 5px; } .user-wrapper { align-self: flex-end; align-items: flex-end; } .user-msg { background: #E60000; color: #FFF; padding: 12px 18px; border-radius: 20px 20px 0 20px; font-size: 15px; line-height: 1.4; } .ai-wrapper { align-self: flex-start; align-items: flex-start; } .ai-msg { background: #F4F4F4; color: #111; padding: 12px 18px; border-radius: 20px 20px 20px 0; font-size: 15px; line-height: 1.4; } #ai-chat-input-area { display: flex; padding: 15px; background: #FFF; border-top: 1px solid #EEE; padding-bottom: 20px; align-items: center; gap: 10px; } #ai-chat-input { flex-grow: 1; background: #F4F4F4; border: none; padding: 15px 20px; border-radius: 30px; outline: none; font-size: 15px; } #ai-chat-send { background: #E60000; color: #FFF; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; } #ai-chat-send svg { width: 20px; height: 20px; fill: #FFF; }';
     document.head.appendChild(style);
 
-    // 2. Inject HTML Structure
+    // 3. Inject HTML
     const widgetContainer = document.createElement('div');
-    widgetContainer.id = 'ai-chat-widget';
-    widgetContainer.innerHTML = `
-        <div id="ai-chat-window">
-            <div id="ai-chat-header">PC Gamer 254 Assistant</div>
-            <div id="ai-chat-messages">
-                <div class="ai-msg">Hello! How can I help you build your PC today?</div>
-            </div>
-            <div id="ai-chat-input-area">
-                <input type="text" id="ai-chat-input" placeholder="Type a message...">
-                <button id="ai-chat-send">Send</button>
-            </div>
-        </div>
-        <button id="ai-chat-button">
-            <!-- Custom AI Star Icon -->
-            <svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"></path></svg>
-        </button>
-    `;
+    widgetContainer.innerHTML = '<button id="ai-chat-widget-btn"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"></path></svg></button><div id="ai-chat-window"><div id="ai-chat-header"><button id="ai-chat-close">&#10094;</button><img id="ai-chat-logo" src="YOUR_LOGO_URL_HERE" alt="Logo"><div id="ai-chat-title">PC Gamer 254</div></div><div id="ai-chat-messages"><div class="msg-wrapper ai-wrapper"><div class="msg-label">PC Gamer 254</div><div class="ai-msg">Hello! How can I help you build your PC today?</div></div></div><div id="ai-chat-input-area"><input type="text" id="ai-chat-input" placeholder="Type a message..."><button id="ai-chat-send"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg></button></div></div>';
     document.body.appendChild(widgetContainer);
 
-    // 3. UI Logic and API Call
-    const chatButton = document.getElementById('ai-chat-button');
+    // 4. Logic
+    const chatBtn = document.getElementById('ai-chat-widget-btn');
     const chatWindow = document.getElementById('ai-chat-window');
+    const closeBtn = document.getElementById('ai-chat-close');
     const chatInput = document.getElementById('ai-chat-input');
     const chatSend = document.getElementById('ai-chat-send');
     const chatMessages = document.getElementById('ai-chat-messages');
 
-    chatButton.addEventListener('click', () => {
-        chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex';
-    });
+    chatBtn.addEventListener('click', function() { chatWindow.style.display = 'flex'; chatBtn.style.display = 'none'; });
+    closeBtn.addEventListener('click', function() { chatWindow.style.display = 'none'; chatBtn.style.display = 'flex'; });
 
-    // The corrected backend URL including /api/chat
     const BACKEND_URL = "https://pcgamer-api.onrender.com/api/chat";
 
     async function sendMessage() {
         const text = chatInput.value.trim();
         if (!text) return;
 
-        chatMessages.innerHTML += \`<div class="user-msg">\${text}</div>\`;
+        chatMessages.innerHTML += '<div class="msg-wrapper user-wrapper"><div class="msg-label">Customer</div><div class="user-msg">' + text + '</div></div>';
         chatInput.value = '';
         chatMessages.scrollTop = chatMessages.scrollHeight;
 
@@ -101,19 +41,17 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message: text })
             });
-
-            if (!response.ok) throw new Error('Network error');
-
             const data = await response.json();
-            chatMessages.innerHTML += \`<div class="ai-msg">\${data.reply}</div>\`;
-        } catch (error) {
-            chatMessages.innerHTML += \`<div class="error-msg">Server offline. Please try again.</div>\`;
+            const formattedReply = (typeof marked !== 'undefined') ? marked.parse(data.reply) : data.reply;
+            chatMessages.innerHTML += '<div class="msg-wrapper ai-wrapper"><div class="msg-label">PC Gamer 254</div><div class="ai-msg">' + formattedReply + '</div></div>';
+        } catch (e) {
+            chatMessages.innerHTML += '<div class="msg-wrapper ai-wrapper"><div class="msg-label">System</div><div class="ai-msg" style="color: #E60000;">Server offline.</div></div>';
         }
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
     chatSend.addEventListener('click', sendMessage);
-    chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
+    chatInput.addEventListener('keypress', function(e) { if (e.key === 'Enter') sendMessage(); });
 })();
+
+ 
