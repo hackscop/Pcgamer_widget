@@ -46,7 +46,7 @@
     });
 
     // Send message logic
-    const BACKEND_URL = "https://pcgamer-api.onrender.com";
+    const BACKEND_URL = "https://pcgamer-api.onrender.com/api/chat";
 
     async function sendMessage() {
         const text = chatInput.value.trim();
