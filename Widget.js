@@ -33,24 +33,40 @@
 
     var BACKEND_URL = "https://pcgamer-api.onrender.com/api/chat";
 
-    // 6. The Typewriter Function
+    // 6. The UPGRADED Typewriter Function (Smart Scroll + 5-Second Skip)
     function typeHTML(element, htmlString, speed) {
         element.innerHTML = '';
         var i = 0;
         var isTag = false;
         var text = '';
+        var startTime = Date.now();
+
         function typeWriter() {
+            // Check if user is scrolled to the bottom (allow 50px buffer)
+            var isAtBottom = (chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight) < 50;
+
+            // Force dump the text if 5 seconds have passed
+            if (Date.now() - startTime > 5000) {
+                element.innerHTML = htmlString;
+                if (isAtBottom) chatMessages.scrollTop = chatMessages.scrollHeight;
+                return;
+            }
+
             if (i < htmlString.length) {
                 text += htmlString.charAt(i);
                 element.innerHTML = text;
                 if (htmlString.charAt(i) === '<') isTag = true;
                 if (htmlString.charAt(i) === '>') isTag = false;
                 i++;
+                
                 if (isTag) {
                     typeWriter(); // Skip waiting if we are building an HTML tag
                 } else {
                     setTimeout(typeWriter, speed);
-                    chatMessages.scrollTop = chatMessages.scrollHeight; // Keep auto-scrolling as it types
+                    // Only auto-scroll if the user hasn't scrolled up
+                    if (isAtBottom) {
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }
                 }
             }
         }
@@ -89,7 +105,7 @@
             
             // Trigger the typewriter effect
             var typeTarget = document.getElementById(typeId);
-            typeHTML(typeTarget, formattedReply, 10); // Types out rapidly
+            typeHTML(typeTarget, formattedReply, 10); 
 
         } catch (e) {
             var loadElErr = document.getElementById(loadingId);
